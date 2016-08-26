@@ -10,16 +10,16 @@ import (
 // Client represents a connection to the websocket.
 // ID is the identifier of the client.
 type Client struct {
-	ID           string
-	rooms        map[string]bool
-	currentRooms []string
-	ws           *websocket.Conn
-	wss          *WebSocket
+	ID          string
+	rooms       map[string]bool
+	currentRoom string
+	ws          *websocket.Conn
+	wss         *WebSocket
 }
 
 // NewClient creates a Client, you won't use this method directly.
 func NewClient(ws *websocket.Conn, wss *WebSocket) *Client {
-	c := &Client{ID: generateUUID(), ws: ws, wss: wss, currentRooms: []string{}}
+	c := &Client{ID: generateUUID(), ws: ws, wss: wss, currentRoom: ""}
 	c.rooms = make(map[string]bool)
 	return c
 }
@@ -88,16 +88,16 @@ func (c *Client) Emit(msg *Message, clientID string) {
 //
 // Example:
 // 	c.Broadcast(msgToEveryone)
-// 	c.In(roomIDs).Broadcast(msgToClientsInRooms)
+// 	c.In(roomID).Broadcast(msgToClientsInRoom)
 func (c *Client) Broadcast(msg *Message) {
-	if len(c.currentRooms) == 0 {
+	if c.currentRoom == "" {
 		rooms := []string{}
 		for roomID := range c.wss.rooms {
 			rooms = append(rooms, roomID)
 		}
 		msg.rooms = rooms
 	} else {
-		msg.rooms = c.currentRooms
+		msg.rooms = []string{c.currentRoom}
 	}
 
 	msg.from = c.ID
@@ -105,13 +105,13 @@ func (c *Client) Broadcast(msg *Message) {
 	c.wss.broadcastCh <- msg
 }
 
-// In sets the client to send a broadcast to specific rooms.
+// In sets the client to send a broadcast to a specific room.
 // Use it always chaining a Broadcast, see example below.
 //
 // Example:
-// 	c.In(roomIDs).Broadcast(msgToClientsInRooms)
-func (c *Client) In(roomIDs []string) *Client {
-	c.currentRooms = roomIDs
+// 	c.In(roomID).Broadcast(msgToClientsInRoom)
+func (c *Client) In(roomID string) *Client {
+	c.currentRoom = roomID
 	return c
 }
 
