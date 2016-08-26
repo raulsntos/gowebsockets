@@ -80,8 +80,6 @@ func (wss *WebSocket) deleteClient(c *Client) {
 	}
 
 	delete(wss.clients, c.ID)
-
-	// TODO: Close Client and delete it
 }
 
 func (wss *WebSocket) joinRoom(c *Client, roomID string) {
