@@ -1,8 +1,8 @@
-package websockets
+package gowebsockets
 
 import "golang.org/x/net/websocket"
 
-// WebSocket contains the websocket handler
+// WebSocket contains the websocket handler.
 type WebSocket struct {
 	Handler websocket.Handler
 
@@ -11,34 +11,34 @@ type WebSocket struct {
 
 	sendCh      chan *Message
 	broadcastCh chan *Message
+	doneCh      chan *Client
 	errCh       chan error
-	doneCh      chan bool
 
 	listeners     map[string]MessageListener
 	connListeners map[string]ConnectionListener
 	errListener   ErrorListener
 }
 
-// MessageListener is a function that will be called for the message that it listens to
+// MessageListener is a function that will be called for the message that it listens to.
 type MessageListener func(c *Client, msg []byte)
 
-// ConnectionListener is a function that will be called for connect/disconnect events
+// ConnectionListener is a function that will be called for connect/disconnect events.
 type ConnectionListener func(c *Client)
 
-// ErrorListener is a function that will be called for the event that it listens to
+// ErrorListener is a function that will be called for the event that it listens to.
 type ErrorListener func(err error)
 
 const bufferSize = 100
 
-// NewWebSocket creates a WebSocket handler
+// NewWebSocket creates a WebSocket handler.
 func NewWebSocket() *WebSocket {
 	wss := &WebSocket{}
 
 	// Channels
 	wss.sendCh = make(chan *Message, bufferSize)
 	wss.broadcastCh = make(chan *Message, bufferSize)
+	wss.doneCh = make(chan *Client, bufferSize)
 	wss.errCh = make(chan error, bufferSize)
-	wss.doneCh = make(chan bool, bufferSize)
 
 	// Maps
 	wss.rooms = make(map[string]*Room)
@@ -80,6 +80,8 @@ func (wss *WebSocket) deleteClient(c *Client) {
 	}
 
 	delete(wss.clients, c.ID)
+
+	// TODO: Close Client and delete it
 }
 
 func (wss *WebSocket) joinRoom(c *Client, roomID string) {
@@ -113,7 +115,8 @@ func (wss *WebSocket) setHandler() {
 	})
 }
 
-// Listen waits for messages to send to the connected clients
+// Listen waits for messages to send to the connected clients.
+// You won't use this method directly.
 func (wss *WebSocket) Listen() {
 	for {
 		select {
@@ -143,40 +146,39 @@ func (wss *WebSocket) Listen() {
 				wss.errListener(err)
 			}
 
-		case <-wss.doneCh:
-			return
-
+		case c := <-wss.doneCh:
+			wss.deleteClient(c)
 		}
 	}
 }
 
-// On subscribes a WSListener function to a specific event
+// On subscribes a WSListener function to a specific event.
 func (wss *WebSocket) On(event string, fn MessageListener) {
 	wss.listeners[event] = fn
 }
 
-// OnConnect subscribes a channel function to the connect event
+// OnConnect subscribes a channel function to the connect event.
 func (wss *WebSocket) OnConnect(fn ConnectionListener) {
 	wss.connListeners["connect"] = fn
 }
 
-// OnDisconnect subscribes a channel function to the error event
+// OnDisconnect subscribes a channel function to the error event.
 func (wss *WebSocket) OnDisconnect(fn ConnectionListener) {
 	wss.connListeners["disconnect"] = fn
 }
 
-// OnError subscribes a channel function to the error event
+// OnError subscribes a channel function to the error event.
 func (wss *WebSocket) OnError(fn ErrorListener) {
 	wss.errListener = fn
 }
 
-// GetClient checks if the client exists and returns the client and a boolean that can be used to check if the client exists (since it might be nil)
+// GetClient checks if the client exists and returns the client and a boolean that can be used to check if the client exists (since it might be nil).
 func (wss *WebSocket) GetClient(clientID string) (*Client, bool) {
 	c, ok := wss.clients[clientID]
 	return c, ok
 }
 
-// GetClients returns every client connected at the time
+// GetClients returns every client connected at the time.
 func (wss *WebSocket) GetClients() []string {
 	clients := []string{}
 	for clientID := range wss.clients {
@@ -185,13 +187,13 @@ func (wss *WebSocket) GetClients() []string {
 	return clients
 }
 
-// GetRoom checks if the room exists and returns the room and a boolean that can be used to check if the room exists (since it might be nil)
+// GetRoom checks if the room exists and returns the room and a boolean that can be used to check if the room exists (since it might be nil).
 func (wss *WebSocket) GetRoom(roomID string) (*Room, bool) {
 	r, ok := wss.rooms[roomID]
 	return r, ok
 }
 
-// GetRooms returns every room that currently exists
+// GetRooms returns every room that currently exists.
 func (wss *WebSocket) GetRooms() []string {
 	rooms := []string{}
 	for roomID := range wss.rooms {
