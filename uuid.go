@@ -1,6 +1,9 @@
 package websockets
 
-import "crypto/rand"
+import (
+	"crypto/rand"
+	"encoding/hex"
+)
 
 // UUID is a unique identifier
 type UUID [16]byte
@@ -10,5 +13,5 @@ func generateUUID() string {
 	if _, err := rand.Read(u[:]); err != nil {
 		panic(err)
 	}
-	return string(u[:])
+	return hex.EncodeToString(u[:])
 }
