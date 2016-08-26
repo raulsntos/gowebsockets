@@ -111,8 +111,9 @@ func (c *Client) Broadcast(msg *Message) {
 // Example:
 // 	c.In(roomID).Broadcast(msgToClientsInRoom)
 func (c *Client) In(roomID string) *Client {
-	c.currentRoom = roomID
-	return c
+	client := *c
+	client.currentRoom = roomID
+	return &client
 }
 
 func (c *Client) receive(msg *Message) {
