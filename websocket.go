@@ -129,12 +129,15 @@ func (wss *WebSocket) Listen() {
 			clientsSent := make(map[string]bool)
 			clientsSent[msg.from] = true
 			for _, roomID := range msg.rooms {
-				for clientID := range wss.rooms[roomID].clients {
-					_, sent := clientsSent[clientID]
-					if !sent {
-						c := wss.clients[clientID]
-						websocket.JSON.Send(c.ws, msg)
-						clientsSent[clientID] = true
+				r, exists := wss.rooms[roomID]
+				if exists {
+					for clientID := range r.clients {
+						_, sent := clientsSent[clientID]
+						if !sent {
+							c := wss.clients[clientID]
+							websocket.JSON.Send(c.ws, msg)
+							clientsSent[clientID] = true
+						}
 					}
 				}
 			}
