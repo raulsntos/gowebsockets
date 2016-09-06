@@ -1,4 +1,6 @@
 /*
+Package gowebsockets provides an easy way to implement Web Sockets in your server
+
 How to install
 
     Run go get github.com/raulsntos/gowebsockets
