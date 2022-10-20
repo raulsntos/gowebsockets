@@ -1,3 +1,10 @@
+# :warning: Deprecated
+
+This package is abandoned, please use a more actively maintained WebSockets package:
+
+- https://godoc.org/github.com/gorilla/websocket
+- https://godoc.org/nhooyr.io/websocket
+
 # gowebsockets [![GoDoc](https://godoc.org/github.com/raulsntos/gowebsockets?status.svg)](https://godoc.org/github.com/raulsntos/gowebsockets)
 
 The gowebsockets package uses the [x/net/websocket](https://godoc.org/golang.org/x/net/websocket) package and implements an easy way to implement a WebSocket in your server. It provides an easy way to listen to messages and handle them as well as sending messages.
